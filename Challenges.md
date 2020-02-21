@@ -33,7 +33,7 @@ training set, translated with Uli's EN-DE news system.
 
 # Pronouns
 
-- Addressee reference pronouns are a major problems. "You" should be translated consistently as "Sie"
+- Addressee reference pronouns are a major problem. "You" should be translated consistently as "Sie"
   or "du". Typically, "Sie" would be the appropriate form in these dialogues if the addressee was
   a human, but there might be exceptions in very informal dialogues (such as the example starting
   with "Hey man what's up?"), and people might be more inclined to use "du" if they believe they're
