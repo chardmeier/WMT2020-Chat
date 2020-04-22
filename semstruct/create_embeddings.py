@@ -18,9 +18,6 @@ def main():
     with open(args.inputfile, 'r') as f:
         input_lines = [line.rstrip('\n') for line in itertools.islice(f, args.maxsent)]
 
-    if args.maxsent:
-        input_lines = input_lines[:args.maxsent]
-
     inputs = tokeniser.batch_encode_plus(input_lines, return_tensors='pt')
     outputs = model(inputs['input_ids'], attention_mask=inputs['attention_mask'])
 
