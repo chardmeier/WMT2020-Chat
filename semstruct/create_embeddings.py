@@ -31,7 +31,7 @@ def main():
             line_gen = enumerate(line.rstrip('\n') for line in f)
 
         maxsent = args.maxsent if args.maxsent else sys.maxsize
-        input_lines = [(i, line) for i, line in itertools.takewhile(lambda i, line: i < maxsent, line_gen)]
+        input_lines = [(i, line) for i, line in itertools.takewhile(lambda tup: tup[0] < maxsent, line_gen)]
 
     inputs = tokeniser.batch_encode_plus((line for i, line in input_lines), return_tensors='pt')
     outputs = model(inputs['input_ids'], attention_mask=inputs['attention_mask'])
