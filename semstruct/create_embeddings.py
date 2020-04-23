@@ -42,9 +42,8 @@ def main():
     sentence_indices = torch.LongTensor([i for i, line in input_lines])
     sentence_embeddings = torch.empty(batchsize, embsize)
     for i in range(batchsize):
-        sentence_embeddings[i, :] = torch.mean(torch.masked_select(word_embeddings[i],
-                                                                   inputs['attention_mask'][i].bool().unsqueeze(1)),
-                                               dim=0)
+        snt_we = word_embeddings[i, inputs['attention_mask'][i].bool(), :]
+        sentence_embeddings[i, :] = torch.mean(snt_we, dim=0)
 
     with open(args.outputfile, 'w') as f:
         torch.save([sentence_indices, sentence_embeddings], f)
