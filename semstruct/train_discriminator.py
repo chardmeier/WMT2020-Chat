@@ -1,5 +1,6 @@
 import argparse
 import itertools
+import logging
 import random
 import torch
 
@@ -22,6 +23,8 @@ def main():
                         help='Weight loss function contribution of similarity and discrimination inversely ' +
                         'by number of dimension.')
     args = parser.parse_args()
+
+    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
     with open(args.embeddings, 'rb') as f:
         indices, embeddings = torch.load(f)
@@ -93,7 +96,7 @@ def train(indices, embeddings, args):
     opt = make_optimiser(args, [param])
 
     for epoch in range(args.epochs):
-        print('EPOCH', epoch)
+        logging.info('EPOCH %d' % epoch)
         for pairs in make_batches(make_pairs(indices, args.poolsize), args.batchsize):
             opt.zero_grad()
             tmat = matc.tmat(param)
@@ -103,10 +106,10 @@ def train(indices, embeddings, args):
             sim_loss = torch.norm(proj[:, args.dims:])
             disc_loss = -torch.norm(proj[:, :args.dims])
             loss = sim_weight * sim_loss + disc_weight * disc_loss
-            print('loss: %g - sim_loss: %g (%g) - disc_loss: %g (%g)' %
-                  (loss.item(),
-                   sim_loss.item(), sim_weight * sim_loss.item(),
-                   disc_loss.item(), disc_weight * disc_loss.item()))
+            logging.info('loss: %g - sim_loss: %g (%g) - disc_loss: %g (%g)' %
+                         (loss.item(),
+                          sim_loss.item(), sim_weight * sim_loss.item(),
+                          disc_loss.item(), disc_weight * disc_loss.item()))
             loss.backward()
             opt.step()
         if args.checkpoint:
