@@ -33,9 +33,10 @@ def main():
         maxsent = args.maxsent if args.maxsent else sys.maxsize
         input_lines = [(i, line) for i, line in itertools.takewhile(lambda tup: tup[0] < maxsent, line_gen)]
 
-    inputs = tokeniser.batch_encode_plus((line for i, line in input_lines),
-                                         return_tensors='pt', return_attention_masks=True)
-    outputs = model(inputs['input_ids'], attention_mask=inputs['attention_mask'])
+    with torch.no_grad():
+        inputs = tokeniser.batch_encode_plus((line for i, line in input_lines),
+                                             return_tensors='pt', return_attention_masks=True)
+        outputs = model(inputs['input_ids'], attention_mask=inputs['attention_mask'])
 
     word_embeddings = outputs[0]
     batchsize, _, embsize = word_embeddings.shape
