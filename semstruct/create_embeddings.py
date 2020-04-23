@@ -40,7 +40,7 @@ def main():
         input_lines = [(i, line) for i, line in itertools.takewhile(lambda tup: tup[0] < maxsent, line_gen)]
 
     with torch.no_grad():
-        inputs = tokeniser.batch_encode_plus((line for i, line in input_lines),
+        inputs = tokeniser.batch_encode_plus((line for i, line in input_lines), pad_to_max_length=True,
                                              return_tensors='pt', return_attention_masks=True)
         outputs = model(inputs['input_ids'], attention_mask=inputs['attention_mask'])
 
