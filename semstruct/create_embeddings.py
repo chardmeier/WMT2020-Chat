@@ -70,7 +70,7 @@ def main():
     all_indices = torch.cat(all_indices)
     all_embeddings = torch.cat(all_embeddings)
 
-    with open(args.outputfile, 'w') as f:
+    with open(args.outputfile, 'wb') as f:
         torch.save([all_indices, all_embeddings], f)
 
 
