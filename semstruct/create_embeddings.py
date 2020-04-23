@@ -13,7 +13,7 @@ def scan_nbest(it):
 
 
 def scan_and_compress_nbest(it):
-    for k, g in itertools.groupby(scan_nbest(it), lambda i, line: i):
+    for k, g in itertools.groupby(scan_nbest(it), lambda tup: tup[0]):
         for cand in set(line for i, line in g):
             yield k, cand
 
