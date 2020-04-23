@@ -90,8 +90,8 @@ def train(indices, embeddings, args):
             diff = embeddings[pairs_t[:, 0], :] - embeddings[pairs_t[:, 1], :]
             proj = diff @ tmat
             sim_loss = torch.norm(proj[:, args.dims:])
-            disc_loss = torch.norm(proj[:, :args.dims])
-            loss = sim_loss - disc_loss
+            disc_loss = -torch.norm(proj[:, :args.dims])
+            loss = sim_loss + disc_loss
             print('loss: %g - sim_loss: %g - disc_loss: %g' % (loss, sim_loss, disc_loss))
             loss.backward()
             opt.step()
