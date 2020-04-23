@@ -82,13 +82,17 @@ def train(indices, embeddings, args):
     opt = make_optimiser(args, [param])
 
     for epoch in range(args.epochs):
+        print('EPOCH', epoch)
         for pairs in make_batches(make_pairs(indices, args.poolsize), args.batchsize):
             opt.zero_grad()
             tmat = matc.tmat(param)
             pairs_t = torch.LongTensor(pairs)
             diff = embeddings[pairs_t[:, 0], :] - embeddings[pairs_t[:, 1], :]
             proj = diff @ tmat
-            loss = torch.norm(proj[:, args.dims:]) - torch.norm(proj[:, :args.dims])
+            sim_loss = torch.norm(proj[:, args.dims:])
+            disc_loss = torch.norm(proj[:, :args.dims])
+            loss = sim_loss - disc_loss
+            print('loss: %g - sim_loss: %g - disc_loss: %g' % (loss, sim_loss, disc_loss))
             loss.backward()
             opt.step()
 
