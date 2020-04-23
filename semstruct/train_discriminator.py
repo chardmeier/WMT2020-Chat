@@ -87,7 +87,7 @@ def train(indices, embeddings, args):
             tmat = matc.tmat(param)
             pairs_t = torch.LongTensor(pairs)
             diff = embeddings[pairs_t[:, 0], :] - embeddings[pairs_t[:, 1], :]
-            proj = tmat @ diff
+            proj = diff @ tmat
             loss = torch.norm(proj[:, args.dims:]) - torch.norm(proj[:, :args.dims])
             loss.backward()
             opt.step()
