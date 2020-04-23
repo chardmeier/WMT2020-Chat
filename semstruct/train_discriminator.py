@@ -17,6 +17,9 @@ def main():
     parser.add_argument('-epochs', type=int, default=3, help='Number of epochs to train.')
     parser.add_argument('-lr', type=float, default=0.01, help='Learning rate.')
     parser.add_argument('-momentum', type=float, default=0.9, help='Momentum.')
+    parser.add_argument('-weight-by-dims', action='store_true',
+                        help='Weight loss function contribution of similarity and discrimination inversely ' +
+                        'by number of dimension.')
     args = parser.parse_args()
 
     with open(args.embeddings, 'rb') as f:
@@ -74,6 +77,13 @@ def train(indices, embeddings, args):
     embsize = embeddings.shape[1]
     paramsize = embsize * (embsize + 1) // 2
 
+    if args.weight_by_dims:
+        disc_weight = 1 / args.dims
+        sim_weight = 1 / (embsize - args.dims)
+    else:
+        disc_weight = 1.0
+        sim_weight = 1.0
+
     matc = TransformationMatrixCreator(embsize)
 
     param = 2 * torch.rand(paramsize) - 1
@@ -91,8 +101,11 @@ def train(indices, embeddings, args):
             proj = diff @ tmat
             sim_loss = torch.norm(proj[:, args.dims:])
             disc_loss = -torch.norm(proj[:, :args.dims])
-            loss = sim_loss + disc_loss
-            print('loss: %g - sim_loss: %g - disc_loss: %g' % (loss, sim_loss, disc_loss))
+            loss = sim_weight * sim_loss + disc_weight * disc_loss
+            print('loss: %g - sim_loss: %g (%g) - disc_loss: %g (%g)' %
+                  (loss.item(),
+                   sim_loss.item(), sim_weight * sim_loss.item(),
+                   disc_loss.item(), disc_weight * disc_loss.item()))
             loss.backward()
             opt.step()
 
