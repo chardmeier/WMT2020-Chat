@@ -8,6 +8,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('embeddings', help='Sentence embeddings.')
     parser.add_argument('outfile', help='Output file for trained matrix.')
+    parser.add_argument('-checkpoint', help='File name to save checkpoints after each epoch.')
     parser.add_argument('-dims', type=int, default=10,
                         help='Number of dimensions for discriminative part of embeddings.')
     parser.add_argument('-poolsize', type=int, default=20,
@@ -108,6 +109,9 @@ def train(indices, embeddings, args):
                    disc_loss.item(), disc_weight * disc_loss.item()))
             loss.backward()
             opt.step()
+        if args.checkpoint:
+            with open(args.checkpoint, 'wb') as f:
+                torch.save(param, f)
 
     return matc.tmat(param.detach())
 
