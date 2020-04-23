@@ -59,7 +59,7 @@ def main():
 
             word_embeddings = outputs[0]
             batchsize, _, embsize = word_embeddings.shape
-            sentence_indices = torch.LongTensor([i for i, line in input_lines])
+            sentence_indices = torch.LongTensor([i for i, line in batch])
             sentence_embeddings = torch.empty(batchsize, embsize)
             for i in range(batchsize):
                 snt_we = word_embeddings[i, inputs['attention_mask'][i].bool(), :]
