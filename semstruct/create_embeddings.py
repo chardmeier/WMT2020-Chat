@@ -12,6 +12,12 @@ def scan_nbest(it):
             yield int(fields[0]), fields[1]
 
 
+def scan_and_compress_nbest(it):
+    for k, g in itertools.groupby(scan_nbest(it), lambda i, line: i):
+        for cand in set(line for i, line in g):
+            yield k, cand
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('inputfile', help='Input text file.')
@@ -26,7 +32,7 @@ def main():
 
     with open(args.inputfile, 'r') as f:
         if args.nbest:
-            line_gen = scan_nbest(f)
+            line_gen = scan_and_compress_nbest(f)
         else:
             line_gen = enumerate(line.rstrip('\n') for line in f)
 
