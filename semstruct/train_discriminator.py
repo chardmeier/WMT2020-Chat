@@ -31,11 +31,13 @@ def main():
 class TransformationMatrixCreator:
     def __init__(self, n):
         self.n = n
-        self.idx = torch.tril_indices(n, n)
+        idx = torch.tril_indices(n, n)
+        self.idx0 = idx[0]
+        self.idx1 = idx[1]
 
     def tmat(self, param):
         tri = torch.zeros(self.n, self.n)
-        tri[self.idx] = param
+        tri[self.idx0, self.idx1] = param
         q, r = torch.qr(tri)
         return q
 
@@ -51,10 +53,9 @@ def make_batches(iterable, batchsize):
 
 def make_pairs(indices, poolsize):
     offset = 0
-    for pool in make_batches(itertools.groupby(indices), poolsize):
+    for pool in make_batches([sum(1 for _ in g) for k, g in itertools.groupby(indices)], poolsize):
         pool_pairs = []
-        for k, g in pool:
-            n = len(g)
+        for n in pool:
             for i in range(n):
                 for j in range(n):
                     if i != j:
@@ -71,7 +72,7 @@ def make_optimiser(args, params):
 
 def train(indices, embeddings, args):
     embsize = embeddings.shape[1]
-    paramsize = embsize * (embsize - 1) // 2
+    paramsize = embsize * (embsize + 1) // 2
 
     matc = TransformationMatrixCreator(embsize)
 
