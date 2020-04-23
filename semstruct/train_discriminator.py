@@ -92,7 +92,7 @@ def train(indices, embeddings, args):
             loss.backward()
             opt.step()
 
-    return matc.tmat(param)
+    return matc.tmat(param.detach())
 
 
 if __name__ == '__main__':
