@@ -84,7 +84,8 @@ def train(training_set, validation_set, args):
         logging.info('EPOCH %d' % epoch)
         for pairs in make_batches(make_pairs(indices, args.poolsize), args.batchsize):
             opt.zero_grad()
-            loss = matc.compute_loss(param, embeddings, pairs)
+            tmat = matc.transformation_matrix(param)
+            loss = matc.compute_loss(tmat, embeddings, pairs)
             loss.backward()
             opt.step()
 
