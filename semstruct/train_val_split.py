@@ -44,10 +44,10 @@ def main():
 
     train_indices = list(sorted(set(sentences.keys()) - set(val_indices)))
 
-    print('Writing training set to %d.' % args.train_out, file=sys.stderr)
+    print('Writing training set to %s.' % args.train_out, file=sys.stderr)
     create_set(sentences, args.train_out, train_indices)
 
-    print('Writing validation set to %d.' % args.val_out, file=sys.stderr)
+    print('Writing validation set to %s.' % args.val_out, file=sys.stderr)
     create_set(sentences, args.val_out, val_indices)
 
 
