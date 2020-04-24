@@ -1,5 +1,4 @@
 import argparse
-import itertools
 import random
 import sys
 import torch
