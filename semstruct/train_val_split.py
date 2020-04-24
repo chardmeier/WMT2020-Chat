@@ -36,8 +36,8 @@ def main():
         with open(args.val_indices, 'r') as f:
             val_indices = [int(line.rstrip('\n')) for line in f]
     else:
-        nsent = indices[-1] + 1
-        print('Found %d sentences. Generating random sample of size %d.' % (nsent, args.val_size), file=sys.stderr)
+        print('Found %d sentences. Generating random sample of size %d.' % (len(sentences), args.val_size),
+              file=sys.stderr)
         val_indices = random.sample(sentences.keys(), args.val_size)
         val_indices.sort()
         for i in val_indices:
