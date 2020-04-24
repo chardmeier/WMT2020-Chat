@@ -91,7 +91,7 @@ def train(indices, embeddings, args):
     matc = TransformationMatrixCreator(embsize)
 
     param = 2 * torch.rand(paramsize) - 1
-    param.requires_grad = True
+    param.requires_grad_()
 
     opt = make_optimiser(args, [param])
 
