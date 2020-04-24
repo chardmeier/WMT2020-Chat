@@ -25,6 +25,7 @@ def main():
             indices, embeddings = torch.load(f)
         for i in torch.unique_consecutive(indices):
             embs = embeddings[indices == i, :]
+            i = i.item()
             if i in sentences:
                 sentences[i] = torch.cat([sentences[i], embs], dim=0)
             else:
