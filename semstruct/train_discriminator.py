@@ -102,9 +102,9 @@ def train(indices, embeddings, args):
             tmat = matc.tmat(param)
             pairs_t = torch.LongTensor(pairs)
             diff = embeddings[pairs_t[:, 0], :] - embeddings[pairs_t[:, 1], :]
-            proj = diff @ tmat
-            sim_loss = torch.norm(proj[:, args.dims:])
-            disc_loss = -torch.norm(proj[:, :args.dims])
+            transformed = diff @ tmat
+            sim_loss = torch.norm(transformed[:, args.dims:])
+            disc_loss = -torch.norm(transformed[:, :args.dims])
             loss = sim_weight * sim_loss + disc_weight * disc_loss
             logging.info('loss: %g - sim_loss: %g (%g) - disc_loss: %g (%g)' %
                          (loss.item(),
