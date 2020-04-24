@@ -98,8 +98,9 @@ def train(training_set, validation_set, args):
             val_loss, val_sim_loss, val_disc_loss = matc.score_set(tmat, validation_set, args)
             logging.info('Epoch %d. Validation loss: %g - Similarity loss: %g - Discrimination loss: %g' %
                          (epoch, val_loss, val_sim_loss, val_disc_loss))
-            det = torch.prod(torch.diag(tri))
-            logging.info('Epoch %d. Determinant of parameter matrix: %g' % (epoch, det))
+            logabsdet = tri.diag().abs().log().sum()
+            sgndet = tri.diag().sign().prod()
+            logging.info('Epoch %d. log |det L| = %g - sgn det L = %g' % (epoch, logabsdet, sgndet))
 
         if args.checkpoint:
             with open(args.checkpoint, 'wb') as f:
