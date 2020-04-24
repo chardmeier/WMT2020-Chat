@@ -55,7 +55,7 @@ def create_set(sentences, outfile, indices):
     embs = torch.cat([sentences[i] for i in indices])
     inds = []
     for i in indices:
-        inds.extend(i for _ in sentences[i].shape[0])
+        inds.extend(i for _ in range(sentences[i].shape[0]))
     inds = torch.LongTensor(inds)
     with open(outfile, 'wb') as f:
         torch.save([inds, embs], f)
