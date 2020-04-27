@@ -36,7 +36,7 @@ def main():
 
     logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
-    with open(args.input, 'rb') as f:
+    with open(args.train_input, 'rb') as f:
         indices, embeddings = torch.load(f)
     with open(args.pairwise, 'r') as f:
         pairwise = load_scored_nbest(f)
