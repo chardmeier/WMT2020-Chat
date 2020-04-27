@@ -38,7 +38,7 @@ def main():
 
     with open(args.train_input, 'rb') as f:
         indices, embeddings = torch.load(f)
-    with open(args.pairwise, 'r') as f:
+    with open(args.train_scored_nbest, 'r') as f:
         pairwise = load_scored_nbest(f)
 
     if args.val:
