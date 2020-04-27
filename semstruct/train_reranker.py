@@ -14,7 +14,7 @@ class PairwiseRanker(torch.nn.Module):
         self.transformation_matrix = transformation_matrix
 
     def forward(self, x1, x2):
-        if self.transformation_matrix:
+        if self.transformation_matrix is not None:
             tx1 = x1 @ self.transformation_matrix
             tx2 = x2 @ self.transformation_matrix
         else:
