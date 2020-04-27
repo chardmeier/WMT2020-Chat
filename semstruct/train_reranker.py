@@ -44,7 +44,7 @@ def main():
     with open(args.train_input, 'rb') as f:
         indices, embeddings = torch.load(f)
     with open(args.train_scored_nbest, 'r') as f:
-        pairwise = load_scored_nbest(f)
+        pairwise = load_scored_nbest(f).to(device)
 
     embeddings = embeddings.to(device)
 
@@ -56,7 +56,7 @@ def main():
         with open(args.val, 'rb') as f:
             val_indices, val_embeddings = torch.load(f)
         with open(args.val_scored_nbest, 'r') as f:
-            val_pairwise = load_scored_nbest(f)
+            val_pairwise = load_scored_nbest(f).to(device)
 
     if args.tmat:
         with open(args.tmat, 'rb') as f:
@@ -113,18 +113,16 @@ def load_scored_nbest(input_file):
                 elif score1 < score2:
                     pairwise.append((i, j, 0))
                     pairwise.append((j, i, 1))
-    return pairwise
+    return torch.tensor(pairwise, dtype=torch.long)
 
 
 def make_examples(embeddings, pairwise, batchsize):
-    shuffled = random.sample(pairwise, k=len(pairwise))
-    while shuffled:
-        batch = shuffled[:batchsize]
-        shuffled = shuffled[batchsize:]
-        batch_t = torch.tensor(batch, dtype=torch.long, device=embeddings.device)
-        x1 = embeddings[batch_t[:, 0]]
-        x2 = embeddings[batch_t[:, 1]]
-        y = batch_t[:, 2].unsqueeze(1).float()
+    shuffled = torch.randperm(len(pairwise), device=embeddings.device)
+    for i in range(0, len(pairwise), batchsize):
+        batch = pairwise[shuffled[i:(i + batchsize)]]
+        x1 = embeddings[batch[:, 0]]
+        x2 = embeddings[batch[:, 1]]
+        y = batch[:, 2].unsqueeze(1).float()
         yield x1, x2, y
 
 
