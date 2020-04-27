@@ -4,6 +4,7 @@ import logging
 import random
 import sys
 import torch
+import tqdm
 
 
 class PairwiseRanker(torch.nn.Module):
@@ -65,9 +66,11 @@ def main():
 
     opt = torch.optim.LBFGS(model.parameters())
 
+    batches_per_epoch = len(pairwise) // args.batchsize
+
     for epoch in range(args.epochs):
         logging.info('EPOCH %d' % epoch)
-        for x1, x2, y in make_examples(embeddings, pairwise, args.batchsize):
+        for x1, x2, y in tqdm.tqdm(make_examples(embeddings, pairwise, args.batchsize), total=batches_per_epoch):
             def train_closure():
                 opt.zero_grad()
                 y_hat = model(x1, x2)
