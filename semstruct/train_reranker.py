@@ -68,11 +68,13 @@ def main():
     for epoch in range(args.epochs):
         logging.info('EPOCH %d' % epoch)
         for x1, x2, y in make_examples(embeddings, pairwise, args.batchsize):
-            opt.zero_grad()
-            y_hat = model(x1, x2)
-            loss = loss_fn(y_hat, y)
-            loss.backward()
-            opt.step()
+            def train_closure():
+                opt.zero_grad()
+                y_hat = model(x1, x2)
+                loss = loss_fn(y_hat, y)
+                loss.backward()
+                return loss
+            opt.step(train_closure)
 
         with torch.no_grad():
             val_loss = 0
