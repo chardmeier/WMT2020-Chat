@@ -60,7 +60,7 @@ def main():
 
     if args.tmat:
         with open(args.tmat, 'rb') as f:
-            tmat = torch.load(f)
+            tmat = torch.load(f).to(device)
         embsize = tmat.shape[1]
     else:
         tmat = None
