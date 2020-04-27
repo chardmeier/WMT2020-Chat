@@ -34,14 +34,19 @@ def main():
     parser.add_argument('-tmat', help='File containing transformation matrix.')
     parser.add_argument('-batchsize', type=int, default=50, help='Batch size for training.')
     parser.add_argument('-epochs', type=int, default=10, help='Number of epochs to train.')
+    parser.add_argument('-device', default='cpu', help='CUDA device to use, if any.')
     args = parser.parse_args()
 
     logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
+
+    device = torch.device(args.device)
 
     with open(args.train_input, 'rb') as f:
         indices, embeddings = torch.load(f)
     with open(args.train_scored_nbest, 'r') as f:
         pairwise = load_scored_nbest(f)
+
+    embeddings = embeddings.to(device)
 
     if args.val:
         if not args.val_scored_nbest:
@@ -61,8 +66,8 @@ def main():
         tmat = None
         embsize = embeddings.shape[1]
 
-    model = PairwiseRanker(embsize, transformation_matrix=tmat)
-    loss_fn = torch.nn.BCEWithLogitsLoss()
+    model = PairwiseRanker(embsize, transformation_matrix=tmat).to(device)
+    loss_fn = torch.nn.BCEWithLogitsLoss().to(device)
 
     opt = torch.optim.LBFGS(model.parameters())
 
@@ -87,7 +92,7 @@ def main():
             logging.info('Validation loss: %g' % val_loss)
 
     with open(args.output, 'wb') as f:
-        torch.save(model.state_dict(), f)
+        torch.save(model.to('cpu').state_dict(), f)
 
 
 def scan_scored_nbest(input_file):
