@@ -121,7 +121,7 @@ def make_examples(embeddings, pairwise, batchsize):
     while shuffled:
         batch = shuffled[:batchsize]
         shuffled = shuffled[batchsize:]
-        batch_t = torch.LongTensor(batch, device=embeddings.device)
+        batch_t = torch.tensor(batch, dtype=torch.long, device=embeddings.device)
         x1 = embeddings[batch_t[:, 0]]
         x2 = embeddings[batch_t[:, 1]]
         y = batch_t[:, 2].unsqueeze(1).float()
