@@ -2,6 +2,7 @@ import argparse
 import itertools
 import logging
 import random
+import sys
 import torch
 
 
@@ -27,7 +28,7 @@ def main():
     parser.add_argument('train_input', help='File containing input embeddings.')
     parser.add_argument('output', help='File to store trained weights in.')
     parser.add_argument('-train_scored_nbest', required=True, help='Scored n-best list for training set.')
-    parser.add_argument('-val_scored_nbest', required=True, help='Scored n-best list for validation set.')
+    parser.add_argument('-val_scored_nbest', help='Scored n-best list for validation set.')
     parser.add_argument('-val', help='Input embeddings validation set.')
     parser.add_argument('-tmat', help='File containing transformation matrix.')
     parser.add_argument('-batchsize', type=int, default=50, help='Batch size for training.')
@@ -41,6 +42,10 @@ def main():
         pairwise = load_scored_nbest(f)
 
     if args.val:
+        if not args.val_scored_nbest:
+            logging.error('-val_scored_nbest is required if using validation set.')
+            sys.exit(1)
+
         with open(args.val, 'rb') as f:
             val_indices, val_embeddings = torch.load(f)
         with open(args.val_scored_nbest, 'r') as f:
