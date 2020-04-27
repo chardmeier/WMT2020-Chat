@@ -35,6 +35,8 @@ def main():
     parser.add_argument('-maxsent', type=int, help='Maximum number of sentences to process.')
     parser.add_argument('-nbest', action='store_true', help='Input is in MT n-best format.')
     parser.add_argument('-batchsize', type=int, help='Batch size to process at one time.')
+    parser.add_argument('-log-sentences', action='store_true',
+                        help='Log the sentences that are getting scored to stdout.')
     args = parser.parse_args()
 
     tokeniser = transformers.AutoTokenizer.from_pretrained(args.model)
@@ -53,6 +55,9 @@ def main():
     all_embeddings = []
     with torch.no_grad():
         for batch in make_batches(input_lines, args.batchsize):
+            if args.log_sentences:
+                for i, line in batch:
+                    print('%d ||| %s' % (i, line))
             inputs = tokeniser.batch_encode_plus((line for i, line in batch), pad_to_max_length=True,
                                                  return_tensors='pt', return_attention_masks=True)
             outputs = model(inputs['input_ids'], attention_mask=inputs['attention_mask'])
