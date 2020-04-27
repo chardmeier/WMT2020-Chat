@@ -37,10 +37,13 @@ def main():
     parser.add_argument('-batchsize', type=int, help='Batch size to process at one time.')
     parser.add_argument('-log-sentences', action='store_true',
                         help='Log the sentences that are getting scored to stdout.')
+    parser.add_argument('-device', default='cpu', help='CUDA device to use, if any.')
     args = parser.parse_args()
 
+    device = torch.device(args.device)
+
     tokeniser = transformers.AutoTokenizer.from_pretrained(args.model)
-    model = transformers.AutoModel.from_pretrained(args.model).eval()
+    model = transformers.AutoModel.from_pretrained(args.model).to(device).eval()
 
     with open(args.inputfile, 'r') as f:
         if args.nbest:
@@ -60,7 +63,7 @@ def main():
                     print('%d ||| %s' % (i, line))
             inputs = tokeniser.batch_encode_plus((line for i, line in batch), pad_to_max_length=True,
                                                  return_tensors='pt', return_attention_masks=True)
-            outputs = model(inputs['input_ids'], attention_mask=inputs['attention_mask'])
+            outputs = model(inputs['input_ids'].to(device), attention_mask=inputs['attention_mask'].to(device))
 
             word_embeddings = outputs[0]
             batchsize, _, embsize = word_embeddings.shape
@@ -68,7 +71,7 @@ def main():
             sentence_embeddings = torch.empty(batchsize, embsize)
             for i in range(batchsize):
                 snt_we = word_embeddings[i, inputs['attention_mask'][i].bool(), :]
-                sentence_embeddings[i, :] = torch.mean(snt_we, dim=0)
+                sentence_embeddings[i, :] = torch.mean(snt_we, dim=0).to('cpu')
             all_indices.append(sentence_indices)
             all_embeddings.append(sentence_embeddings)
 
