@@ -114,7 +114,7 @@ def make_examples(embeddings, pairwise, batchsize):
         batch_t = torch.LongTensor(batch, device=embeddings.device)
         x1 = embeddings[batch_t[:, 0]]
         x2 = embeddings[batch_t[:, 1]]
-        y = batch_t[:, 2].float()
+        y = batch_t[:, 2].unsqueeze(1).float()
         yield x1, x2, y
 
 
