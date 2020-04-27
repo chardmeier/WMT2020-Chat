@@ -32,6 +32,7 @@ def main():
     parser.add_argument('-val', help='Input embeddings validation set.')
     parser.add_argument('-tmat', help='File containing transformation matrix.')
     parser.add_argument('-batchsize', type=int, default=50, help='Batch size for training.')
+    parser.add_argument('-epochs', type=int, default=10, help='Number of epochs to train.')
     args = parser.parse_args()
 
     logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
