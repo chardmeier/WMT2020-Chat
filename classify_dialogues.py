@@ -1,3 +1,4 @@
+import itertools
 import sklearn.cluster
 import sklearn.feature_extraction
 import spacy
@@ -26,7 +27,7 @@ def main():
     wordlists = [dialogue_to_wordlist(nlp, d) for d in dialogues]
 
     anchor_tags = ['PIZZA', 'AUTO', 'TAXI', 'CINEMA', 'COFFEE', 'DINNER']
-    anchors = [['pizza'], ['repair'], ['ride'], ['movie'], ['coffee'], ['dinner']]
+    anchors = [['pizza'], ['auto', 'car', 'repair'], ['ride'], ['movie'], ['coffee'], ['dinner', 'restaurant']]
     nanchors = len(anchors)
 
     vectoriser = sklearn.feature_extraction.text.TfidfVectorizer(analyzer=lambda x: x)
