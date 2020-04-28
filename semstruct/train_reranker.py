@@ -70,7 +70,7 @@ def main():
     model = PairwiseRanker(embsize, transformation_matrix=tmat).to(device)
     loss_fn = torch.nn.BCEWithLogitsLoss().to(device)
 
-    opt = torch.optim.SGD(model.parameters(), lr=.01)
+    opt = torch.optim.Adam(model.parameters())
 
     batches_per_epoch = len(pairwise) // args.batchsize
 
