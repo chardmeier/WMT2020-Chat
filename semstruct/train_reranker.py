@@ -35,6 +35,7 @@ def main():
     parser.add_argument('-batchsize', type=int, default=50, help='Batch size for training.')
     parser.add_argument('-epochs', type=int, default=10, help='Number of epochs to train.')
     parser.add_argument('-device', default='cpu', help='CUDA device to use, if any.')
+    parser.add_argument('-tqdm', action='store_true', help='Show progress bar during training.')
     args = parser.parse_args()
 
     logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
@@ -76,7 +77,7 @@ def main():
     for epoch in range(args.epochs):
         logging.info('EPOCH %d' % epoch)
         for x1, x2, y in tqdm.tqdm(make_examples(embeddings, pairwise, args.batchsize),
-                                   total=batches_per_epoch, disable=None):
+                                   total=batches_per_epoch, disable=not args.tqdm):
             opt.zero_grad()
             y_hat = model(x1, x2)
             loss = loss_fn(y_hat, y)
