@@ -1,4 +1,7 @@
+import argparse
+import collections
 import itertools
+import joblib
 import sklearn.cluster
 import sklearn.feature_extraction
 import spacy
@@ -13,6 +16,17 @@ def dialogue_to_wordlist(nlp, dialogue):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('corpus', help='Corpus file to predict or train on.')
+    parser.add_argument('-train', action='store_true', help='Select training mode.')
+    parser.add_argument('-predict', action='store_true', help='Select prediction mode.')
+    parser.add_argument('-model', nargs=1, help='File name for model saving or loading.')
+    args = parser.parse_args()
+
+    if args.train == args.predict:
+        print('Please specify either -train or -predict.', file=sys.stderr)
+        sys.exit(1)
+
     dialogues = [[]]
     with open('train-fulldialogues.en', 'r') as f:
         for line in f:
@@ -26,6 +40,17 @@ def main():
     nlp = spacy.load('en', disable=['parser', 'ner'])
     wordlists = [dialogue_to_wordlist(nlp, d) for d in dialogues]
 
+    if args.train:
+        model, preds = train(wordlists)
+        joblib.dump(args.model, model)
+        print_dialogues(dialogues, preds)
+    else:
+        model = joblib.load(args.model)
+        preds = predict(model, wordlists)
+        print_dialogues(dialogues, preds)
+
+
+def train(wordlists):
     anchor_tags = ['pizza', 'auto', 'taxi', 'cinema', 'coffee', 'dinner']
     anchors = [['pizza'], ['auto', 'car', 'repair'], ['ride'], ['movie'], ['coffee'], ['dinner', 'restaurant']]
     nanchors = len(anchors)
@@ -39,9 +64,22 @@ def main():
         print("Anchors don't map to separate classes:", list(zip(anchors, anchor_labels)), file=sys.stderr)
         sys.exit(1)
     tagmap = ['<' + t + '>' for l, t in sorted(zip(anchor_labels, anchor_tags))]
-    for l, d in zip(kmeans.labels_, dialogues):
-        label = tagmap[l]
-        for turn in d:
+
+    preds = [tagmap[x] for x in kmeans.labels_[:-nanchors]]
+    model = collections.namedtuple(tagmap=tagmap, vectoriser=vectoriser, kmeans=kmeans)
+
+    return model, preds
+
+
+def predict(model, wordlists):
+    x = model.vectoriser.transform(wordlists)
+    labels = model.kmeans.predict(x)
+    return [model.tagmap[x] for x in labels]
+
+
+def print_dialogues(dialogues, preds):
+    for label, dialogue in zip(preds, dialogues):
+        for turn in dialogue:
             print(label, turn)
         print()
 
