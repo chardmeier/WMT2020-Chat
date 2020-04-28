@@ -69,7 +69,7 @@ def main():
     model = PairwiseRanker(embsize, transformation_matrix=tmat).to(device)
     loss_fn = torch.nn.BCEWithLogitsLoss().to(device)
 
-    opt = torch.optim.LBFGS(model.parameters())
+    opt = torch.optim.SGD(model.parameters(), lr=.01)
 
     batches_per_epoch = len(pairwise) // args.batchsize
 
@@ -77,13 +77,12 @@ def main():
         logging.info('EPOCH %d' % epoch)
         for x1, x2, y in tqdm.tqdm(make_examples(embeddings, pairwise, args.batchsize),
                                    total=batches_per_epoch, disable=None):
-            def train_closure():
-                opt.zero_grad()
-                y_hat = model(x1, x2)
-                loss = loss_fn(y_hat, y)
-                loss.backward()
-                return loss
-            opt.step(train_closure)
+            opt.zero_grad()
+            y_hat = model(x1, x2)
+            loss = loss_fn(y_hat, y)
+            loss.backward()
+            return loss
+            opt.step()
 
         with torch.no_grad():
             val_loss = 0
