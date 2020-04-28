@@ -91,8 +91,8 @@ def main():
                 val_loss += loss_fn(y_hat, y).item()
             logging.info('Validation loss: %g' % val_loss)
 
-    with open(args.output, 'wb') as f:
-        torch.save(model.to('cpu').state_dict(), f)
+        with open(args.output, 'wb') as f:
+            torch.save(model.to('cpu').state_dict(), f)
 
 
 def scan_scored_nbest(input_file):
