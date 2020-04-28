@@ -75,7 +75,8 @@ def main():
 
     for epoch in range(args.epochs):
         logging.info('EPOCH %d' % epoch)
-        for x1, x2, y in tqdm.tqdm(make_examples(embeddings, pairwise, args.batchsize), total=batches_per_epoch):
+        for x1, x2, y in tqdm.tqdm(make_examples(embeddings, pairwise, args.batchsize),
+                                   total=batches_per_epoch, disable=None):
             def train_closure():
                 opt.zero_grad()
                 y_hat = model(x1, x2)
