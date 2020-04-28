@@ -1,7 +1,7 @@
-import itertools
 import sklearn.cluster
 import sklearn.feature_extraction
 import spacy
+import sys
 
 
 def dialogue_to_wordlist(nlp, dialogue):
@@ -25,11 +25,21 @@ def main():
     nlp = spacy.load('en', disable=['parser', 'ner'])
     wordlists = [dialogue_to_wordlist(nlp, d) for d in dialogues]
 
+    anchor_tags = ['PIZZA', 'AUTO', 'TAXI', 'CINEMA', 'COFFEE', 'DINNER']
+    anchors = [['pizza'], ['repair'], ['ride'], ['movie'], ['coffee'], ['dinner']]
+    nanchors = len(anchors)
+
     vectoriser = sklearn.feature_extraction.text.TfidfVectorizer(analyzer=lambda x: x)
-    x = vectoriser.fit_transform(wordlists)
-    kmeans = sklearn.cluster.KMeans(n_clusters=6).fit(x)
-    for i, d in enumerate(dialogues):
-        label = '<%d>' % kmeans.labels_[i]
+    x = vectoriser.fit_transform(wordlists + anchors)
+    kmeans = sklearn.cluster.KMeans(n_clusters=nanchors).fit(x)
+
+    anchor_labels = kmeans.labels_[-nanchors:]
+    if len(set(anchor_labels)) != nanchors:
+        print("Anchors don't map to separate classes:", list(zip(anchors, anchor_labels)), file=sys.stderr)
+        sys.exit(1)
+    tagmap = ['<' + t + '>' for l, t in sorted(zip(anchor_labels, anchor_tags))]
+    for l, d in zip(kmeans.labels_, dialogues):
+        label = tagmap[l]
         for turn in d:
             print(label, turn)
         print()
