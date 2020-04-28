@@ -81,7 +81,6 @@ def main():
             y_hat = model(x1, x2)
             loss = loss_fn(y_hat, y)
             loss.backward()
-            return loss
             opt.step()
 
         with torch.no_grad():
