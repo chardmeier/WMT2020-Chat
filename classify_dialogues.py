@@ -26,7 +26,7 @@ def main():
     nlp = spacy.load('en', disable=['parser', 'ner'])
     wordlists = [dialogue_to_wordlist(nlp, d) for d in dialogues]
 
-    anchor_tags = ['PIZZA', 'AUTO', 'TAXI', 'CINEMA', 'COFFEE', 'DINNER']
+    anchor_tags = ['pizza', 'auto', 'taxi', 'cinema', 'coffee', 'dinner']
     anchors = [['pizza'], ['auto', 'car', 'repair'], ['ride'], ['movie'], ['coffee'], ['dinner', 'restaurant']]
     nanchors = len(anchors)
 
