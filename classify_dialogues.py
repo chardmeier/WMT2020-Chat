@@ -1,5 +1,4 @@
 import argparse
-import collections
 import itertools
 import joblib
 import sklearn.cluster
@@ -67,15 +66,15 @@ def train(wordlists):
     tagmap = ['<' + t + '>' for l, t in sorted(zip(anchor_labels, anchor_tags))]
 
     preds = [tagmap[x] for x in kmeans.labels_[:-nanchors]]
-    model = collections.namedtuple(tagmap=tagmap, vectoriser=vectoriser, kmeans=kmeans)
+    model = {'tagmap': tagmap, 'vectoriser': vectoriser, 'kmeans': kmeans}
 
     return model, preds
 
 
 def predict(model, wordlists):
-    x = model.vectoriser.transform(wordlists)
-    labels = model.kmeans.predict(x)
-    return [model.tagmap[x] for x in labels]
+    x = model['vectoriser'].transform(wordlists)
+    labels = model['kmeans'].predict(x)
+    return [model['tagmap'][x] for x in labels]
 
 
 def print_dialogues(dialogues, preds):
