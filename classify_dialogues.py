@@ -20,7 +20,8 @@ def main():
     parser.add_argument('corpus', help='Corpus file to predict or train on.')
     parser.add_argument('-train', action='store_true', help='Select training mode.')
     parser.add_argument('-predict', action='store_true', help='Select prediction mode.')
-    parser.add_argument('-model', nargs=1, help='File name for model saving or loading.')
+    parser.add_argument('-model', help='File name for model saving or loading.')
+    parser.add_argument('-subset', type=int, help='Process first N lines of the test set only.')
     args = parser.parse_args()
 
     if args.train == args.predict:
@@ -28,8 +29,8 @@ def main():
         sys.exit(1)
 
     dialogues = [[]]
-    with open('train-fulldialogues.en', 'r') as f:
-        for line in f:
+    with open(args.corpus, 'r') as f:
+        for line in itertools.islice(f, args.subset):
             if line == '\n':
                 dialogues.append([])
             else:
