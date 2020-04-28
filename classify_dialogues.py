@@ -50,12 +50,16 @@ def main():
         print_dialogues(dialogues, preds)
 
 
+def identity(x):
+    return x
+
+
 def train(wordlists):
     anchor_tags = ['pizza', 'auto', 'taxi', 'cinema', 'coffee', 'dinner']
     anchors = [['pizza'], ['auto', 'car', 'repair'], ['ride'], ['movie'], ['coffee'], ['dinner', 'restaurant']]
     nanchors = len(anchors)
 
-    vectoriser = sklearn.feature_extraction.text.TfidfVectorizer(analyzer=lambda x: x)
+    vectoriser = sklearn.feature_extraction.text.TfidfVectorizer(analyzer=identity)
     x = vectoriser.fit_transform(wordlists + anchors)
     kmeans = sklearn.cluster.KMeans(n_clusters=nanchors).fit(x)
 
