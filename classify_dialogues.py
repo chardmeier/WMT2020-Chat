@@ -42,7 +42,7 @@ def main():
 
     if args.train:
         model, preds = train(wordlists)
-        joblib.dump(args.model, model)
+        joblib.dump(model, args.model)
         print_dialogues(dialogues, preds)
     else:
         model = joblib.load(args.model)
