@@ -19,14 +19,23 @@ def main():
     parser.add_argument('model', help='Reranking model to use.')
     parser.add_argument('embeddings', help='N-best embeddings to rerank.')
     parser.add_argument('sntlog', help='Sentences corresponding to n-best embeddings.')
+    parser.add_argument('-tmat', help='File containing transformation matrix.')
     parser.add_argument('-score_bleu', help='Calculate BLEU score wrt reference translation.')
     args = parser.parse_args()
 
-    with open(args.model, 'rb') as f:
-        model = torch.load(f)
+    if args.tmat:
+        with open(args.tmat, 'rb') as f:
+            tmat = torch.load(f)
+    else:
+        tmat = None
 
     with open(args.embeddings, 'rb') as f:
         indices, embeddings = torch.load(f)
+
+    model = semstruct.PairwiseRanker(embeddings.shape[1], transformation_matrix=tmat).eval()
+
+    with open(args.model, 'rb') as f:
+        model.load_state_dict(torch.load(f))
 
     with open(args.sntlog, 'r') as f:
         sntlog = {k: [t for i, t in g] for k, g in itertools.groupby(scan_sntlog(f), lambda tup: tup[0])}
