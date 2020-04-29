@@ -19,7 +19,6 @@ def main():
                         help='Batchsize per weight update.')
     parser.add_argument('-epochs', type=int, default=3, help='Number of epochs to train.')
     parser.add_argument('-lr', type=float, default=0.01, help='Learning rate.')
-    parser.add_argument('-momentum', type=float, default=0.9, help='Momentum.')
     parser.add_argument('-weight-by-dims', action='store_true',
                         help='Weight loss function contribution of similarity and discrimination inversely ' +
                         'by number of dimension.')
@@ -63,7 +62,7 @@ def make_pairs(indices, poolsize):
 
 
 def make_optimiser(args, params):
-    opt = torch.optim.SGD(params, lr=args.lr, momentum=args.momentum)
+    opt = torch.optim.Adam(params)
     return opt
 
 
