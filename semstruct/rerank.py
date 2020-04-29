@@ -58,11 +58,7 @@ def main():
         hard_scores = compressed_sym > .5
         votes = torch.sum(hard_scores, dim=1)
         winner = torch.argmax(votes).item()
-        n_scores = scores.numpy()
-        n_sym_scores = sym_scores.numpy()
-        n_compressed_sym = compressed_sym.numpy()
-        n_hard_scores = hard_scores.numpy()
-        output.append(sntlog[i][winner])
+        output.append(sntlog[i.item()][winner])
 
     for snt in output:
         print(snt)
