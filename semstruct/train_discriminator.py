@@ -82,7 +82,7 @@ def train(training_set, validation_set, args, device='cpu'):
     param = 2 * torch.rand(paramsize, device=device) - 1
     param.requires_grad_()
 
-    opt = make_optimiser(args, [param]).to(device)
+    opt = make_optimiser(args, [param])
 
     best_val_loss = float('inf')
     for epoch in range(args.epochs):
