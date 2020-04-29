@@ -10,7 +10,7 @@ class PairwiseRanker(torch.nn.Module):
     def __init__(self, embsize, transformation_matrix=None):
         super().__init__()
         self.embsize = embsize
-        self.linear = torch.nn.Linear(2 * embsize, 1)
+        self.linear = torch.nn.Linear(2 * embsize, 1, bias=False)
         self.transformation_matrix = transformation_matrix
 
     def forward(self, x1, x2):
