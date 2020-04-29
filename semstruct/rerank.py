@@ -50,7 +50,7 @@ def main():
         pairs = torch.tensor([(i, j) for i in range(n) for j in range(n) if i != j], dtype=torch.long)
         pred = model(embs[pairs[:, 0]], embs[pairs[:, 1]])
         scores = torch.zeros(n, n)
-        scores[pairs[:, 0], pairs[:, 1]] = torch.nn.functional.sigmoid(pred).squeeze()
+        scores[pairs[:, 0], pairs[:, 1]] = torch.sigmoid(pred).squeeze()
         # We run the classifier both ways, so the output may not be symmetric.
         sym_scores = torch.sqrt(scores * (1 - scores.t()))
         # remove diagonal
