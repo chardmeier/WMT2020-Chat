@@ -23,6 +23,8 @@ def main():
     parser.add_argument('-score_bleu', help='Calculate BLEU score wrt reference translation.')
     args = parser.parse_args()
 
+    torch.set_grad_enabled(False)
+
     if args.tmat:
         with open(args.tmat, 'rb') as f:
             tmat = torch.load(f)
