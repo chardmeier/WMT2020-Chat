@@ -1,7 +1,6 @@
 import argparse
 import itertools
 import logging
-import random
 import sys
 import torch
 import tqdm
