@@ -3,6 +3,7 @@ import itertools
 import math
 import sacrebleu
 import semstruct
+import sys
 import torch
 
 
@@ -53,7 +54,7 @@ def main():
         with open(args.score_bleu, 'r') as f:
             reference = [[line.rstrip('\n') for line in f]]
 
-        print(sacrebleu.corpus_bleu(output, reference))
+        print(sacrebleu.corpus_bleu(output, reference), file=sys.stderr)
 
 
 if __name__ == '__main__':
