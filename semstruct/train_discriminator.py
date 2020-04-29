@@ -79,6 +79,7 @@ def train(training_set, validation_set, args):
 
     opt = make_optimiser(args, [param])
 
+    best_val_loss = float('inf')
     for epoch in range(args.epochs):
         logging.info('EPOCH %d' % epoch)
         for pairs in make_batches(make_pairs(indices, args.poolsize), args.batchsize):
@@ -96,12 +97,16 @@ def train(training_set, validation_set, args):
             val_loss, val_sim_loss, val_disc_loss = matc.score_set(tmat, validation_set, args)
             logging.info('Epoch %d. Validation loss: %g - Similarity loss: %g - Discrimination loss: %g' %
                          (epoch, val_loss, val_sim_loss, val_disc_loss))
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss.item()
+                best_param = param.clone().detach()
+                logging.info('New best validation loss: %g' % best_val_loss)
 
         if args.checkpoint:
             with open(args.checkpoint, 'wb') as f:
                 torch.save(param, f)
 
-    return matc.transformation_matrix(param.detach())
+    return matc.transformation_matrix(best_param)
 
 
 class TransformationMatrix:
