@@ -45,7 +45,7 @@ def main():
     output = []
 
     threshold = math.log(.5)
-    for i in sorted(sntlog.keys()):
+    for i in torch.unique_consecutive(indices):
         embs = embeddings[indices == i]
         n = embs.shape[0]
         pairs = torch.tensor([(i, j) for i in range(n) for j in range(n) if i != j], dtype=torch.long)
