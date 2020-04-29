@@ -44,18 +44,24 @@ def main():
 
     output = []
 
-    threshold = math.log(.5)
     for i in torch.unique_consecutive(indices):
         embs = embeddings[indices == i]
         n = embs.shape[0]
         pairs = torch.tensor([(i, j) for i in range(n) for j in range(n) if i != j], dtype=torch.long)
         pred = model(embs[pairs[:, 0]], embs[pairs[:, 1]])
         scores = torch.zeros(n, n)
-        scores[pairs[:, 0], pairs[:, 1]] = torch.nn.functional.logsigmoid(pred).squeeze()
+        scores[pairs[:, 0], pairs[:, 1]] = torch.nn.functional.sigmoid(pred).squeeze()
         # We run the classifier both ways, so the output may not be symmetric.
-        hard_scores = ((scores + scores.t()) / 2) > threshold
+        sym_scores = torch.sqrt(scores * (1 - scores.t()))
+        # remove diagonal
+        compressed_sym = torch.tril(sym_scores)[:, :-1] + torch.triu(sym_scores)[:, 1:]
+        hard_scores = compressed_sym > .5
         votes = torch.sum(hard_scores, dim=1)
-        winner = torch.argmax(votes)
+        winner = torch.argmax(votes).item()
+        n_scores = scores.numpy()
+        n_sym_scores = sym_scores.numpy()
+        n_compressed_sym = compressed_sym.numpy()
+        n_hard_scores = hard_scores.numpy()
         output.append(sntlog[i][winner])
 
     for snt in output:
