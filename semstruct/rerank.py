@@ -51,7 +51,7 @@ def main():
         pairs = torch.tensor([(i, j) for i in range(n) for j in range(n) if i != j], dtype=torch.long)
         pred = model(embs[pairs[:, 0]], embs[pairs[:, 1]])
         scores = torch.zeros(n, n)
-        scores[pairs[:, 0], pairs[:, 1]] = torch.nn.functional.logsigmoid(pred)
+        scores[pairs[:, 0], pairs[:, 1]] = torch.nn.functional.logsigmoid(pred).squeeze()
         # We run the classifier both ways, so the output may not be symmetric.
         hard_scores = ((scores + scores.t()) / 2) > threshold
         votes = torch.sum(hard_scores, dim=1)
