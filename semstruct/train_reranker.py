@@ -73,6 +73,7 @@ def main():
 
     batches_per_epoch = len(pairwise) // args.batchsize
 
+    best_val_loss = float('inf')
     for epoch in range(args.epochs):
         logging.info('EPOCH %d' % epoch)
         for x1, x2, y in tqdm.tqdm(make_examples(embeddings, pairwise, args.batchsize),
@@ -90,8 +91,11 @@ def main():
                 val_loss += loss_fn(y_hat, y).item()
             logging.info('Validation loss: %g' % val_loss)
 
-        with open(args.output, 'wb') as f:
-            torch.save(model.to('cpu').state_dict(), f)
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            logging.info('Saving new checkpoint.')
+            with open(args.output, 'wb') as f:
+                torch.save(model.to('cpu').state_dict(), f)
 
 
 def scan_scored_nbest(input_file):
