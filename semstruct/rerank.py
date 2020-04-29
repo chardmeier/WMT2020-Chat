@@ -1,6 +1,5 @@
 import argparse
 import itertools
-import math
 import sacrebleu
 import semstruct
 import sys
