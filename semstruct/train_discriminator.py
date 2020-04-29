@@ -30,12 +30,10 @@ def main():
     device = torch.device(args.device)
 
     with open(args.training_set, 'rb') as f:
-        training_set = torch.load(f)
-        training_set[1].to(device)
+        training_set = torch.load(f, map_location=device)
 
     with open(args.validation_set, 'rb') as f:
-        validation_set = torch.load(f)
-        validation_set[1].to(device)
+        validation_set = torch.load(f, map_location=device)
 
     tmat = train(training_set, validation_set, args, device=device)
 
