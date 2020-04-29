@@ -1,7 +1,6 @@
 import argparse
 import itertools
 import logging
-import random
 import torch
 
 
@@ -30,10 +29,12 @@ def main():
     device = torch.device(args.device)
 
     with open(args.training_set, 'rb') as f:
-        training_set = torch.load(f, map_location=device)
+        training_set = torch.load(f)
+        training_set[1] = training_set[1].to(device)
 
     with open(args.validation_set, 'rb') as f:
-        validation_set = torch.load(f, map_location=device)
+        validation_set = torch.load(f)
+        validation_set[1] = validation_set[1].to(device)
 
     tmat = train(training_set, validation_set, args, device=device)
 
@@ -50,18 +51,23 @@ def make_batches(iterable, batchsize):
         yield batch
 
 
-def make_pairs(indices, poolsize):
+def make_pair_batches(indices, poolsize, batchsize, device='cpu'):
     offset = 0
     for pool in make_batches([sum(1 for _ in g) for k, g in itertools.groupby(indices)], poolsize):
-        pool_pairs = []
+        pool_t = torch.tensor(pool, dtype=torch.long)
+        npairs = torch.sum(pool_t * (pool_t - 1)).item()
+        pool_pairs = torch.empty(npairs, 2, device=device)
+        start = 0
         for n in pool:
             for i in range(n):
-                for j in range(n):
-                    if i != j:
-                        pool_pairs.append((offset + i, offset + j))
+                pool_pairs[(start + i * (n - 1)):(start + (i + 1) * (n - 1)), 0] = offset + i
+                js = torch.tensor([j for j in range(n) if i != j], dtype=torch.long, device=device)
+                pool_pairs[(start + i * (n - 1)):(start + (i + 1) * (n - 1)), 1] = offset + js
             offset += n
-        random.shuffle(pool_pairs)
-        yield from pool_pairs
+            start += n * (n - 1)
+        perm = torch.randperm(npairs, device=device)
+        for i in range(0, npairs, batchsize):
+            yield pool_pairs[perm[i:(i + batchsize)]]
 
 
 def make_optimiser(args, params):
@@ -85,7 +91,7 @@ def train(training_set, validation_set, args, device='cpu'):
     best_val_loss = float('inf')
     for epoch in range(args.epochs):
         logging.info('EPOCH %d' % epoch)
-        for pairs in make_batches(make_pairs(indices, args.poolsize), args.batchsize):
+        for pairs in make_pair_batches(indices, args.poolsize, args.batchsize, device=device):
             opt.zero_grad()
             tmat = matc.transformation_matrix(param)
             loss = matc.compute_loss(tmat, embeddings, pairs)
@@ -153,7 +159,7 @@ class TransformationMatrix:
         total_loss = 0
         total_sim_loss = 0
         total_disc_loss = 0
-        for pairs in make_batches(make_pairs(indices, args.poolsize), args.batchsize):
+        for pairs in make_pair_batches(indices, args.poolsize, args.batchsize, device=embeddings.device):
             sim_loss, disc_loss = self.compute_loss_components(tmat, embeddings, pairs)
             loss = self.sim_weight * sim_loss + self.disc_weight * disc_loss
             total_sim_loss += sim_loss
