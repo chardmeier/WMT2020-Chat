@@ -90,17 +90,13 @@ def train(training_set, validation_set, args):
             opt.step()
 
         with torch.no_grad():
-            tri = matc.param_to_triangular(param)
-            tmat = matc.triangular_to_tmat(tri)
+            tmat = matc.transformation_matrix(param)
             train_loss, train_sim_loss, train_disc_loss = matc.score_set(tmat, training_set, args)
             logging.info('Epoch %d. Training loss: %g - Similarity loss: %g - Discrimination loss: %g' %
                          (epoch, train_loss, train_sim_loss, train_disc_loss))
             val_loss, val_sim_loss, val_disc_loss = matc.score_set(tmat, validation_set, args)
             logging.info('Epoch %d. Validation loss: %g - Similarity loss: %g - Discrimination loss: %g' %
                          (epoch, val_loss, val_sim_loss, val_disc_loss))
-            logabsdet = tri.diag().abs().log().sum()
-            sgndet = tri.diag().sign().prod()
-            logging.info('Epoch %d. log |det L| = %g - sgn det L = %g' % (epoch, logabsdet, sgndet))
 
         if args.checkpoint:
             with open(args.checkpoint, 'wb') as f:
@@ -124,18 +120,12 @@ class TransformationMatrix:
             self.disc_weight = 1.0
             self.sim_weight = 1.0
 
-    def param_to_triangular(self, param):
+    def transformation_matrix(self, param):
         tri = torch.zeros(self.n, self.n)
         tri[self.idx0, self.idx1] = param
-        return tri
-
-    def triangular_to_tmat(self, tri):
-        q, r = torch.qr(tri)
-        return q
-
-    def transformation_matrix(self, param):
-        tri = self.param_to_triangular(param)
-        q = self.triangular_to_tmat(tri)
+        ss = tri - tri.t()
+        i_n = torch.eye(self.n)
+        q = torch.solve(i_n + ss, i_n - ss).solution
         return q
 
     def compute_loss_components(self, tmat, embeddings, pairs):
