@@ -22,17 +22,22 @@ def main():
     parser.add_argument('-weight-by-dims', action='store_true',
                         help='Weight loss function contribution of similarity and discrimination inversely ' +
                         'by number of dimension.')
+    parser.add_argument('-device', default='cpu', help='CUDA device to use, if any.')
     args = parser.parse_args()
 
     logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 
+    device = torch.device(args.device)
+
     with open(args.training_set, 'rb') as f:
         training_set = torch.load(f)
+        training_set[1].to(device)
 
     with open(args.validation_set, 'rb') as f:
         validation_set = torch.load(f)
+        validation_set[1].to(device)
 
-    tmat = train(training_set, validation_set, args)
+    tmat = train(training_set, validation_set, args, device=device)
 
     with open(args.outfile, 'wb') as f:
         torch.save(tmat, f)
@@ -66,18 +71,18 @@ def make_optimiser(args, params):
     return opt
 
 
-def train(training_set, validation_set, args):
+def train(training_set, validation_set, args, device='cpu'):
     indices, embeddings = training_set
 
     embsize = embeddings.shape[1]
     paramsize = embsize * (embsize + 1) // 2
 
-    matc = TransformationMatrix(embsize, args.dims, weight_by_dims=args.weight_by_dims)
+    matc = TransformationMatrix(embsize, args.dims, weight_by_dims=args.weight_by_dims, device=device)
 
-    param = 2 * torch.rand(paramsize) - 1
+    param = 2 * torch.rand(paramsize, device=device) - 1
     param.requires_grad_()
 
-    opt = make_optimiser(args, [param])
+    opt = make_optimiser(args, [param]).to(device)
 
     best_val_loss = float('inf')
     for epoch in range(args.epochs):
@@ -104,13 +109,14 @@ def train(training_set, validation_set, args):
 
         if args.checkpoint:
             with open(args.checkpoint, 'wb') as f:
-                torch.save(param, f)
+                torch.save(param.to('cpu'), f)
 
     return matc.transformation_matrix(best_param)
 
 
 class TransformationMatrix:
-    def __init__(self, n, dims, weight_by_dims=False):
+    def __init__(self, n, dims, weight_by_dims=False, device='cpu'):
+        self.device = device
         self.n = n
         idx = torch.tril_indices(n, n)
         self.idx0 = idx[0]
@@ -125,15 +131,15 @@ class TransformationMatrix:
             self.sim_weight = 1.0
 
     def transformation_matrix(self, param):
-        tri = torch.zeros(self.n, self.n)
+        tri = torch.zeros(self.n, self.n, device=param.device)
         tri[self.idx0, self.idx1] = param
         ss = tri - tri.t()
-        i_n = torch.eye(self.n)
+        i_n = torch.eye(self.n, device=param.device)
         q = torch.solve(i_n + ss, i_n - ss).solution
         return q
 
     def compute_loss_components(self, tmat, embeddings, pairs):
-        pairs_t = torch.LongTensor(pairs)
+        pairs_t = torch.tensor(pairs, dtype=torch.long, device=embeddings.device)
         diff = embeddings[pairs_t[:, 0], :] - embeddings[pairs_t[:, 1], :]
         transformed = diff @ tmat
         sim_loss = torch.norm(transformed[:, self.dims:])
