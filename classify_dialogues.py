@@ -1,6 +1,8 @@
 import argparse
+import collections
 import itertools
 import joblib
+import json
 import sklearn.cluster
 import sklearn.feature_extraction
 import spacy
@@ -21,21 +23,28 @@ def main():
     parser.add_argument('-predict', action='store_true', help='Select prediction mode.')
     parser.add_argument('-model', help='File name for model saving or loading.')
     parser.add_argument('-subset', type=int, help='Process first N lines of the test set only.')
+    parser.add_argument('-json', action='store_true', help='Input and output BConTrasT JSON files.')
     args = parser.parse_args()
 
     if args.train == args.predict:
         print('Please specify either -train or -predict.', file=sys.stderr)
         sys.exit(1)
 
-    dialogues = [[]]
-    with open(args.corpus, 'r') as f:
-        for line in itertools.islice(f, args.subset):
-            if line == '\n':
-                dialogues.append([])
-            else:
-                dialogues[-1].append(line.rstrip('\n'))
-    if not dialogues[-1]:
-        dialogues.pop()
+    if args.json:
+        with open(args.corpus, 'r') as f:
+            in_json = json.load(f, object_pairs_hook=collections.OrderedDict)
+        srctgt = {'customer': 'target', 'agent': 'source'}
+        dialogues = [[t[srctgt[t['speaker']]] for t in d] for d in in_json.values()]
+    else:
+        dialogues = [[]]
+        with open(args.corpus, 'r') as f:
+            for line in itertools.islice(f, args.subset):
+                if line == '\n':
+                    dialogues.append([])
+                else:
+                    dialogues[-1].append(line.rstrip('\n'))
+        if not dialogues[-1]:
+            dialogues.pop()
 
     nlp = spacy.load('en', disable=['parser', 'ner'])
     wordlists = [dialogue_to_wordlist(nlp, d) for d in dialogues]
@@ -43,10 +52,14 @@ def main():
     if args.train:
         model, preds = train(wordlists)
         joblib.dump(model, args.model)
-        print_dialogues(dialogues, preds)
     else:
         model = joblib.load(args.model)
         preds = predict(model, wordlists)
+
+    if args.json:
+        out = [(k, {'dialogue_type': p, 'utterances': u}) for p, (k, u) in zip(preds, in_json.items())]
+        print(json.dumps(collections.OrderedDict(out), indent=4))
+    else:
         print_dialogues(dialogues, preds)
 
 
