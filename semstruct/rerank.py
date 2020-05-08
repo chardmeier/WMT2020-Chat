@@ -33,7 +33,7 @@ def main():
     with open(args.embeddings, 'rb') as f:
         indices, embeddings = torch.load(f)
 
-    embsize = tmat.shape[1] if tmat else embeddings.shape[1]
+    embsize = tmat.shape[1] if args.tmat else embeddings.shape[1]
     model = semstruct.PairwiseRanker(embsize, transformation_matrix=tmat).eval()
 
     with open(args.model, 'rb') as f:
