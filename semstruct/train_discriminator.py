@@ -56,7 +56,7 @@ def make_pair_batches(indices, poolsize, batchsize, device='cpu'):
     for pool in make_batches([sum(1 for _ in g) for k, g in itertools.groupby(indices)], poolsize):
         pool_t = torch.tensor(pool, dtype=torch.long)
         npairs = torch.sum(pool_t * (pool_t - 1)).item()
-        pool_pairs = torch.empty(npairs, 2, device=device)
+        pool_pairs = torch.empty(npairs, 2, dtype=torch.long, device=device)
         start = 0
         for n in pool:
             for i in range(n):
@@ -143,8 +143,7 @@ class TransformationMatrix:
         return q
 
     def compute_loss_components(self, tmat, embeddings, pairs):
-        pairs_t = torch.tensor(pairs, dtype=torch.long, device=embeddings.device)
-        diff = embeddings[pairs_t[:, 0], :] - embeddings[pairs_t[:, 1], :]
+        diff = embeddings[pairs[:, 0], :] - embeddings[pairs[:, 1], :]
         transformed = diff @ tmat
         sim_loss = torch.norm(transformed[:, self.dims:])
         disc_loss = -torch.norm(transformed[:, :self.dims])
