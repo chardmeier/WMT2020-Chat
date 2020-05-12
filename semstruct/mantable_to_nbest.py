@@ -29,6 +29,8 @@ def main():
             seen.add(t)
         if discard:
             print('Discarding conflicting annotations in sentence', i, file=sys.stderr)
+            for c in discard:
+                print(c, file=sys.stderr)
             cands = [(t, c) for t, c in cands if c not in discard]
 
         if len(cands) > 1:
