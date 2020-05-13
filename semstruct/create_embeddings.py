@@ -12,9 +12,10 @@ def scan_nbest(it):
             yield int(fields[0]), fields[1]
 
 
-def scan_and_compress_nbest(it):
+def scan_and_compress_nbest(it, no_dups=False):
+    cnt = list if no_dups else set
     for k, g in itertools.groupby(scan_nbest(it), lambda tup: tup[0]):
-        for cand in set(line for i, line in g):
+        for cand in cnt(line for i, line in g):
             yield k, cand
 
 
@@ -35,6 +36,8 @@ def main():
     parser.add_argument('-maxsent', type=int, help='Maximum number of sentences to process.')
     parser.add_argument('-nbest', action='store_true', help='Input is in MT n-best format.')
     parser.add_argument('-batchsize', type=int, help='Batch size to process at one time.')
+    parser.add_argument('-no-dups', action='store_true', help="Asserts that thhe input n-best list doesn't contain " +
+                        "duplicate translations, so it won't be deduplicated and reordered.")
     parser.add_argument('-log-sentences', action='store_true',
                         help='Log the sentences that are getting scored to stdout.')
     parser.add_argument('-device', default='cpu', help='CUDA device to use, if any.')
@@ -47,7 +50,7 @@ def main():
 
     with open(args.inputfile, 'r') as f:
         if args.nbest:
-            line_gen = scan_and_compress_nbest(f)
+            line_gen = scan_and_compress_nbest(f, no_dups=args.no_dups)
         else:
             line_gen = enumerate(line.rstrip('\n') for line in f)
 
