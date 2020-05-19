@@ -28,6 +28,7 @@ def main():
     parser.add_argument('train_input', help='File containing input embeddings.')
     parser.add_argument('output', help='File to store trained weights in.')
     parser.add_argument('-train_scored_nbest', required=True, help='Scored n-best list for training set.')
+    parser.add_argument('-val_subset', help='File containing sentence numbers from training to use as validation set.')
     parser.add_argument('-val_scored_nbest', help='Scored n-best list for validation set.')
     parser.add_argument('-val', help='Input embeddings validation set.')
     parser.add_argument('-tmat', help='File containing transformation matrix.')
@@ -42,11 +43,25 @@ def main():
     device = torch.device(args.device)
 
     with open(args.train_input, 'rb') as f:
-        indices, embeddings = torch.load(f)
+        indices, embeddings = torch.load(f, map_location=device)
     with open(args.train_scored_nbest, 'r') as f:
-        pairwise = load_scored_nbest(f).to(device)
+        nb_indices, pairwise = load_scored_nbest(f, device=device)
 
     embeddings = embeddings.to(device)
+
+    if args.val_subset:
+        if args.val:
+            raise ValueError('-val and -val_subset cannot be used together.')
+        with open(args.val_subset, 'r') as f:
+            val_subset = torch.tensor([int(line.rstrip('\n')) for line in f], dtype=torch.long, device=device)
+        emb_val_mask = (indices.unsqueeze(1) == val_subset.unsqueeze(0)).any(dim=1)
+        nb_val_mask = (nb_indices.unsqueeze(1) == val_subset.unsqueeze(0)).any(dim=1)
+        val_indices = indices[emb_val_mask]
+        val_embeddings = embeddings[emb_val_mask]
+        val_pairwise = pairwise[nb_val_mask]
+        indices = indices[emb_val_mask.logical_not()]
+        embeddings = embeddings[emb_val_mask.logical_not()]
+        pairwise = pairwise[nb_val_mask.logical_not()]
 
     if args.val:
         if not args.val_scored_nbest:
@@ -56,7 +71,7 @@ def main():
         with open(args.val, 'rb') as f:
             val_indices, val_embeddings = torch.load(f)
         with open(args.val_scored_nbest, 'r') as f:
-            val_pairwise = load_scored_nbest(f).to(device)
+            _, val_pairwise = load_scored_nbest(f).to(device)
 
     if args.tmat:
         with open(args.tmat, 'rb') as f:
@@ -104,8 +119,9 @@ def scan_scored_nbest(input_file):
         yield int(fields[0]), i, float(fields[2])
 
 
-def load_scored_nbest(input_file):
+def load_scored_nbest(input_file, device='cpu'):
     pairwise = []
+    indices = []
     for k, g in itertools.groupby(scan_scored_nbest(input_file), lambda tup: tup[0]):
         group = [(i, score) for _, i, score in g]
         for i, score1 in group:
@@ -113,10 +129,15 @@ def load_scored_nbest(input_file):
                 if score1 > score2:
                     pairwise.append((i, j, 1))
                     pairwise.append((j, i, 0))
+                    indices.append(k)
+                    indices.append(k)
                 elif score1 < score2:
                     pairwise.append((i, j, 0))
                     pairwise.append((j, i, 1))
-    return torch.tensor(pairwise, dtype=torch.long)
+                    indices.append(k)
+                    indices.append(k)
+    return torch.tensor(indices, dtype=torch.long, device=device),\
+           torch.tensor(pairwise, dtype=torch.long, device=device)
 
 
 def make_examples(embeddings, pairwise, batchsize):
