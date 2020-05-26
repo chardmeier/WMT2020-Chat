@@ -26,7 +26,7 @@ def main():
 
     if args.tmat:
         with open(args.tmat, 'rb') as f:
-            tmat = torch.load(f)
+            tmat = torch.load(f, map_location='cpu')
     else:
         tmat = None
 
