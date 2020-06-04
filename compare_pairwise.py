@@ -14,18 +14,30 @@ def main():
     sys = []
 
     with open(args.sys1, 'r') as f:
-        sys.append([line.rstrip('\n') for line in f])
+        sys1 = [line.rstrip('\n') for line in f]
 
     with open(args.sys2, 'r') as f:
-        sys.append([line.rstrip('\n') for line in f])
+        sys2 = [line.rstrip('\n') for line in f]
 
-    if len(sys[0]) != len(sys[1]):
+    if len(sys1) != len(sys2):
         raise ValueError('Unequal file length.')
 
-    counts = eval_systems(sys)
-    print('System 1 wins:', counts[0])
-    print('System 2 wins:', counts[1])
-    print('Ties:         ', counts[2])
+    equal = 0
+    sys = [[], []]
+    for a, b in zip(sys1, sys2):
+        if a == b:
+            equal += 1
+        else:
+            sys[0].append(a)
+            sys[1].append(b)
+
+    counts = eval_systems(sys) if sys[0] else [0, 0, 0]
+
+    print('System 1 wins: ', counts[0])
+    print('System 2 wins: ', counts[1])
+    print('Equal outputs: ', equal)
+    print('Evaluated ties:', counts[2])
+    print('Not evaluated: ', len(sys[0]) - sum(counts))
 
     p = scipy.stats.binom_test(counts[:2])
     if p >= .05:
