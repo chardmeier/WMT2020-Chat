@@ -20,6 +20,7 @@ def main():
     parser.add_argument('sntlog', help='Sentences corresponding to n-best embeddings.')
     parser.add_argument('-tmat', help='File containing transformation matrix.')
     parser.add_argument('-score_bleu', help='Calculate BLEU score wrt reference translation.')
+    parser.add_argument('-val_subset', help='Evaluate only on subset.')
     args = parser.parse_args()
 
     torch.set_grad_enabled(False)
@@ -44,7 +45,13 @@ def main():
 
     output = []
 
-    for i in torch.unique_consecutive(indices):
+    if args.val_subset:
+        with open(args.val_subset, 'r') as f:
+            eval_set = torch.tensor([int(line.rstrip('\n')) for line in f], dtype=torch.long)
+    else:
+        eval_set = torch.unique_consecutive(indices)
+
+    for i in eval_set:
         embs = embeddings[indices == i]
         n = embs.shape[0]
         pairs = torch.tensor([(i, j) for i in range(n) for j in range(n) if i != j], dtype=torch.long)
