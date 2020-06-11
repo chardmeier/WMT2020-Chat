@@ -57,7 +57,7 @@ def do_eval(stdscr, sys):
     _, linewidth = stdscr.getmaxyx()
 
     nex = len(sys[0])
-    lines_per_system = 5
+    lines_per_system = 3
 
     curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_YELLOW, -1)
