@@ -23,6 +23,7 @@ def main():
     parser.add_argument('-predict', action='store_true', help='Select prediction mode.')
     parser.add_argument('-model', help='File name for model saving or loading.')
     parser.add_argument('-subset', type=int, help='Process first N lines of the test set only.')
+    parser.add_argument('-truncate', type=int, help='Number of dialogue-initial sentences to train on.')
     parser.add_argument('-json', action='store_true', help='Input and output BConTrasT JSON files.')
     args = parser.parse_args()
 
@@ -34,7 +35,7 @@ def main():
         with open(args.corpus, 'r') as f:
             in_json = json.load(f, object_pairs_hook=collections.OrderedDict)
         srctgt = {'customer': 'target', 'agent': 'source'}
-        dialogues = [[t[srctgt[t['speaker']]] for t in d] for d in in_json.values()]
+        dialogues = [[t[srctgt[t['speaker']]] for t in d[:args.truncate]] for d in in_json.values()]
     else:
         dialogues = [[]]
         with open(args.corpus, 'r') as f:
@@ -42,7 +43,8 @@ def main():
                 if line == '\n':
                     dialogues.append([])
                 else:
-                    dialogues[-1].append(line.rstrip('\n'))
+                    if len(dialogues[-1]) < args.truncate:
+                        dialogues[-1].append(line.rstrip('\n'))
         if not dialogues[-1]:
             dialogues.pop()
 
