@@ -76,7 +76,7 @@ def train(wordlists):
 
     vectoriser = sklearn.feature_extraction.text.TfidfVectorizer(analyzer=identity)
     x = vectoriser.fit_transform(wordlists + anchors)
-    kmeans = sklearn.cluster.KMeans(n_clusters=nanchors).fit(x)
+    kmeans = sklearn.cluster.KMeans(n_clusters=nanchors, init=x[-nanchors:]).fit(x)
 
     anchor_labels = kmeans.labels_[-nanchors:]
     if len(set(anchor_labels)) != nanchors:
