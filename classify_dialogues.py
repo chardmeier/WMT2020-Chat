@@ -3,6 +3,7 @@ import collections
 import itertools
 import joblib
 import json
+import scipy.sparse
 import sklearn.cluster
 import sklearn.decomposition
 import sklearn.feature_extraction
@@ -73,6 +74,13 @@ def identity(x):
     return x
 
 
+def make_dense(mat):
+    if scipy.sparse.isspmatrix(mat):
+        return mat.toarray()
+    else:
+        return mat
+
+
 def train(wordlists, lsa=None):
     anchor_tags = ['pizza', 'auto', 'taxi', 'cinema', 'coffee', 'dinner']
     anchors = [['pizza'], ['auto', 'car', 'repair'], ['ride'], ['movie'], ['coffee'], ['dinner', 'restaurant']]
@@ -86,7 +94,7 @@ def train(wordlists, lsa=None):
 
     pipeline = sklearn.pipeline.make_pipeline(*steps)
     x = pipeline.fit_transform(wordlists + anchors)
-    kmeans = sklearn.cluster.KMeans(n_clusters=nanchors, init=x[-nanchors:].toarray()).fit(x)
+    kmeans = sklearn.cluster.KMeans(n_clusters=nanchors, init=make_dense(x[-nanchors:])).fit(x)
 
     anchor_labels = kmeans.labels_[-nanchors:]
     if len(set(anchor_labels)) != nanchors:
