@@ -94,7 +94,7 @@ def train(wordlists, lsa=None):
 
     pipeline = sklearn.pipeline.make_pipeline(*steps)
     x = pipeline.fit_transform(wordlists + anchors)
-    kmeans = sklearn.cluster.KMeans(n_clusters=nanchors, init=make_dense(x[-nanchors:])).fit(x)
+    kmeans = sklearn.cluster.KMeans(n_clusters=nanchors, init=make_dense(x[-nanchors:]), n_init=1).fit(x)
 
     anchor_labels = kmeans.labels_[-nanchors:]
     if len(set(anchor_labels)) != nanchors:
