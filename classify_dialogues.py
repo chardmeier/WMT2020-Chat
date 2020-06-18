@@ -4,7 +4,10 @@ import itertools
 import joblib
 import json
 import sklearn.cluster
+import sklearn.decomposition
 import sklearn.feature_extraction
+import sklearn.pipeline
+import sklearn.preprocessing
 import spacy
 import sys
 
@@ -24,6 +27,7 @@ def main():
     parser.add_argument('-model', help='File name for model saving or loading.')
     parser.add_argument('-subset', type=int, help='Process first N lines of the test set only.')
     parser.add_argument('-truncate', type=int, help='Number of dialogue-initial sentences to train on.')
+    parser.add_argument('-lsa', type=int, help='Use LSA for dimensionality reduction to N dimensions.')
     parser.add_argument('-json', action='store_true', help='Input and output BConTrasT JSON files.')
     args = parser.parse_args()
 
@@ -52,7 +56,7 @@ def main():
     wordlists = [dialogue_to_wordlist(nlp, d) for d in dialogues]
 
     if args.train:
-        model, preds = train(wordlists)
+        model, preds = train(wordlists, lsa=args.lsa)
         joblib.dump(model, args.model)
     else:
         model = joblib.load(args.model)
@@ -69,13 +73,19 @@ def identity(x):
     return x
 
 
-def train(wordlists):
+def train(wordlists, lsa=None):
     anchor_tags = ['pizza', 'auto', 'taxi', 'cinema', 'coffee', 'dinner']
     anchors = [['pizza'], ['auto', 'car', 'repair'], ['ride'], ['movie'], ['coffee'], ['dinner', 'restaurant']]
     nanchors = len(anchors)
 
-    vectoriser = sklearn.feature_extraction.text.TfidfVectorizer(analyzer=identity)
-    x = vectoriser.fit_transform(wordlists + anchors)
+    steps = [sklearn.feature_extraction.text.TfidfVectorizer(analyzer=identity)]
+
+    if lsa:
+        steps.append(sklearn.decomposition.TruncatedSVD(lsa))
+        steps.append(sklearn.preprocessing.Normalizer(copy=False))
+
+    pipeline = sklearn.pipeline.make_pipeline(*steps)
+    x = pipeline.fit_transform(wordlists + anchors)
     kmeans = sklearn.cluster.KMeans(n_clusters=nanchors, init=x[-nanchors:].toarray()).fit(x)
 
     anchor_labels = kmeans.labels_[-nanchors:]
@@ -85,13 +95,13 @@ def train(wordlists):
     tagmap = ['<' + t + '>' for l, t in sorted(zip(anchor_labels, anchor_tags))]
 
     preds = [tagmap[x] for x in kmeans.labels_[:-nanchors]]
-    model = {'tagmap': tagmap, 'vectoriser': vectoriser, 'kmeans': kmeans}
+    model = {'tagmap': tagmap, 'pipeline': pipeline, 'kmeans': kmeans}
 
     return model, preds
 
 
 def predict(model, wordlists):
-    x = model['vectoriser'].transform(wordlists)
+    x = model['pipeline'].transform(wordlists)
     labels = model['kmeans'].predict(x)
     return [model['tagmap'][x] for x in labels]
 
