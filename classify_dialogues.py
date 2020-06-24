@@ -7,6 +7,7 @@ import scipy.sparse
 import sklearn.cluster
 import sklearn.decomposition
 import sklearn.feature_extraction
+import sklearn.metrics
 import sklearn.pipeline
 import sklearn.preprocessing
 import spacy
@@ -30,6 +31,7 @@ def main():
     parser.add_argument('-truncate', type=int, help='Number of dialogue-initial sentences to train on.')
     parser.add_argument('-lsa', type=int, help='Use LSA for dimensionality reduction to N dimensions.')
     parser.add_argument('-json', action='store_true', help='Input and output BConTrasT JSON files.')
+    parser.add_argument('-eval', action='store_true', help='Evaluate on examples having a gold_dialogue_type.')
     args = parser.parse_args()
 
     if args.train == args.predict:
@@ -40,7 +42,13 @@ def main():
         with open(args.corpus, 'r') as f:
             in_json = json.load(f, object_pairs_hook=collections.OrderedDict)
         srctgt = {'customer': 'target', 'agent': 'source'}
-        dialogues = [[t[srctgt[t['speaker']]] for t in d[:args.truncate]] for d in in_json.values()]
+        if args.eval:
+            def utterances(d):
+                return d['utterances']
+        else:
+            def utterances(d):
+                return d
+        dialogues = [[t[srctgt[t['speaker']]] for t in utterances(d)[:args.truncate]] for d in in_json.values()]
     else:
         dialogues = [[]]
         with open(args.corpus, 'r') as f:
@@ -57,7 +65,13 @@ def main():
     wordlists = [dialogue_to_wordlist(nlp, d) for d in dialogues]
 
     if args.train:
-        model, preds = train(wordlists, lsa=args.lsa)
+        if args.eval:
+            train_wordlists = [w
+                               for t, w in zip((dict(d).get('gold_dialogue_type') for d in in_json.values()), wordlists)
+                               if t is not None]
+        else:
+            train_wordlists = wordlists
+        model, preds = train(train_wordlists, lsa=args.lsa)
         joblib.dump(model, args.model)
     else:
         model = joblib.load(args.model)
@@ -68,6 +82,16 @@ def main():
         print(json.dumps(collections.OrderedDict(out), indent=4))
     else:
         print_dialogues(dialogues, preds)
+
+    if args.eval:
+        gold_tags = [d.get('gold_dialogue_type') for d in in_json.values()]
+        labels = list(sorted(set(gold_tags).difference({None}).union(preds)))
+        gold_pairs = [(p, g) for p, g in zip(preds, gold_tags) if g is not None]
+        gold = [g for p, g in gold_pairs]
+        pred = [p for p, g in gold_pairs]
+        print(labels, file=sys.stderr)
+        print(sklearn.metrics.confusion_matrix(gold, pred, labels=labels), file=sys.stderr)
+        print(sklearn.metrics.precision_recall_fscore_support(gold, pred, labels=labels), file=sys.stderr)
 
 
 def identity(x):
