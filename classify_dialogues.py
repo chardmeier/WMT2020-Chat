@@ -1,5 +1,6 @@
 import argparse
 import collections
+import contextlib
 import itertools
 import joblib
 import json
@@ -89,9 +90,27 @@ def main():
         gold_pairs = [(p, g) for p, g in zip(preds, gold_tags) if g is not None]
         gold = [g for p, g in gold_pairs]
         pred = [p for p, g in gold_pairs]
-        print(labels, file=sys.stderr)
-        print(sklearn.metrics.confusion_matrix(gold, pred, labels=labels), file=sys.stderr)
-        print(sklearn.metrics.precision_recall_fscore_support(gold, pred, labels=labels), file=sys.stderr)
+        p, r, f, s = sklearn.metrics.precision_recall_fscore_support(gold, pred, labels=labels)
+        with contextlib.redirect_stdout(sys.stderr):
+            print('                   P      R      F    Support')
+            for i, l in enumerate(labels):
+                print('%-15s  %0.3f  %0.3f  %0.3f  %5d' % (l, p[i], r[i], f[i], s[i]))
+            print()
+            cmat = sklearn.metrics.confusion_matrix(gold, pred, labels=labels)
+            print_confusion_matrix(labels, cmat)
+
+
+def print_confusion_matrix(labels, matrix):
+    print('              predicted as:')
+    print('gold label: ', end='')
+    for lb in labels:
+        print('  %10s' % lb, end='')
+    print()
+    for i, lb in enumerate(labels):
+        print('%-12s' % lb, end='')
+        for j, lb2 in enumerate(labels):
+            print('  %9d ' % matrix[i, j], end='')
+        print()
 
 
 def identity(x):
