@@ -90,11 +90,12 @@ def main():
         gold_pairs = [(p, g) for p, g in zip(preds, gold_tags) if g is not None]
         gold = [g for p, g in gold_pairs]
         pred = [p for p, g in gold_pairs]
-        p, r, f, s = sklearn.metrics.precision_recall_fscore_support(gold, pred, labels=labels)
+        p, r, f, s = sklearn.metrics.precision_recall_fscore_support(gold, pred, zero_divison=0, labels=labels)
         with contextlib.redirect_stdout(sys.stderr):
             print('                   P      R      F    Support')
             for i, l in enumerate(labels):
                 print('%-15s  %0.3f  %0.3f  %0.3f  %5d' % (l, p[i], r[i], f[i], s[i]))
+            print('%-15s  %0.3f  %0.3f  %0.3f' % ('MACRO', p.mean(), r.mean(), f.mean()))
             print()
             cmat = sklearn.metrics.confusion_matrix(gold, pred, labels=labels)
             print_confusion_matrix(labels, cmat)
