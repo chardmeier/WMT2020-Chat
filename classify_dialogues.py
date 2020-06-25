@@ -15,10 +15,16 @@ import spacy
 import sys
 
 
-def dialogue_to_wordlist(nlp, dialogue):
+def dialogue_to_wordlist(nlp, dialogue, pos=None):
+    if pos == 'nouns':
+        def check_pos(tag):
+            return tag in ['NN', 'NNS']
+    else:
+        def check_pos(tag):
+            return True
     words = []
     for turn in dialogue:
-        words.extend(t.lemma_ for t in nlp(turn) if t.tag_ in ['NN', 'NNS'])
+        words.extend(t.lemma_ for t in nlp(turn) if check_pos(t.tag_))
     return words
 
 
@@ -33,6 +39,7 @@ def main():
     parser.add_argument('-lsa', type=int, help='Use LSA for dimensionality reduction to N dimensions.')
     parser.add_argument('-json', action='store_true', help='Input and output BConTrasT JSON files.')
     parser.add_argument('-eval', action='store_true', help='Evaluate on examples having a gold_dialogue_type.')
+    parser.add_argument('-pos', choices=['nouns', 'all'], default='nouns', help='POS categories to use as features.')
     args = parser.parse_args()
 
     if args.train == args.predict:
@@ -63,7 +70,7 @@ def main():
             dialogues.pop()
 
     nlp = spacy.load('en', disable=['parser', 'ner'])
-    wordlists = [dialogue_to_wordlist(nlp, d) for d in dialogues]
+    wordlists = [dialogue_to_wordlist(nlp, d, pos=args.pos) for d in dialogues]
 
     if args.train:
         if args.eval:
